@@ -28,6 +28,7 @@ import type { TIssueOperations } from "../issue-detail";
 import { IssueCycleSelect } from "../issue-detail/cycle-select";
 import { IssueLabel } from "../issue-detail/label";
 import { IssueModuleSelect } from "../issue-detail/module-select";
+import { IssueTimeTrackingProperty } from "../time-tracking/property";
 
 interface IPeekOverviewProperties {
   workspaceSlug: string;
@@ -286,6 +287,13 @@ export const PeekOverviewProperties: FC<IPeekOverviewProperties> = observer((pro
             <IssueLabel workspaceSlug={workspaceSlug} projectId={projectId} issueId={issueId} disabled={disabled} />
           </div>
         </div>
+
+        <IssueTimeTrackingProperty
+          workspaceSlug={workspaceSlug}
+          projectId={projectId}
+          issueId={issueId}
+          disabled={disabled}
+        />
 
         <IssueWorklogProperty
           workspaceSlug={workspaceSlug}

@@ -72,6 +72,9 @@ Getting started with Plane is simple. Choose the setup that works best for you:
 - **Analytics**
   Access real-time insights across all your Plane data. Visualize trends, remove blockers, and keep your projects moving forward.
 
+- **Time Tracking**
+  Track time spent on work items with a built-in timer. Start/stop timers, add manual time entries, and view time summaries. Compare actual time vs. estimates to improve project planning. Time tracking appears in the Properties panel under Labels for easy access.
+
 - **Drive** (_coming soon_): The drive helps you share documents, images, videos, or any other files that make sense to you or your team and align on the problem/solution.
 
 ## 🛠️ Local development
