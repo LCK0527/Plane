@@ -40,5 +40,5 @@
   },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts"
+  "types": "./dist/index-DNH4U17-.d.ts"
 }

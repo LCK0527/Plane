@@ -3,6 +3,7 @@ import { action, computed, makeObservable, observable } from "mobx";
 import type {
   TIssue,
   TIssueAttachment,
+  TIssueChecklistItem,
   TIssueComment,
   TIssueCommentReaction,
   TIssueLink,
@@ -22,6 +23,8 @@ import type { TIssueRelationTypes } from "@/plane-web/types";
 import type { IIssueRootStore } from "../root.store";
 import { IssueAttachmentStore } from "./attachment.store";
 import type { IIssueAttachmentStore, IIssueAttachmentStoreActions } from "./attachment.store";
+import { IssueChecklistStore } from "./checklist.store";
+import type { IIssueChecklistStore } from "./checklist.store";
 import { IssueCommentStore } from "./comment.store";
 import type { IIssueCommentStore, IIssueCommentStoreActions, TCommentLoader } from "./comment.store";
 import { IssueCommentReactionStore } from "./comment_reaction.store";
@@ -111,6 +114,7 @@ export interface IIssueDetail
   issue: IIssueStore;
   reaction: IIssueReactionStore;
   attachment: IIssueAttachmentStore;
+  checklist: IIssueChecklistStore;
   activity: IIssueActivityStore;
   comment: IIssueCommentStore;
   commentReaction: IIssueCommentReactionStore;
@@ -137,7 +141,7 @@ export abstract class IssueDetail implements IIssueDetail {
       issue: undefined,
     },
   };
-  openWidgets: TWorkItemWidgets[] = ["sub-work-items", "links", "attachments"];
+  openWidgets: TWorkItemWidgets[] = ["sub-work-items", "links", "attachments", "checklist"];
   lastWidgetAction: TWorkItemWidgets | null = null;
   isCreateIssueModalOpen: boolean = false;
   isIssueLinkModalOpen: boolean = false;
@@ -154,6 +158,7 @@ export abstract class IssueDetail implements IIssueDetail {
   issue: IIssueStore;
   reaction: IIssueReactionStore;
   attachment: IIssueAttachmentStore;
+  checklist: IIssueChecklistStore;
   subIssues: IIssueSubIssuesStore;
   link: IIssueLinkStore;
   subscription: IIssueSubscriptionStore;
@@ -206,6 +211,7 @@ export abstract class IssueDetail implements IIssueDetail {
     this.issue = new IssueStore(this, serviceType);
     this.reaction = new IssueReactionStore(this, serviceType);
     this.attachment = new IssueAttachmentStore(rootStore, serviceType);
+    this.checklist = new IssueChecklistStore(rootStore, serviceType);
     this.activity = new IssueActivityStore(rootStore.rootStore as RootStore, serviceType);
     this.comment = new IssueCommentStore(this, serviceType);
     this.commentReaction = new IssueCommentReactionStore(this);
@@ -313,6 +319,29 @@ export abstract class IssueDetail implements IIssueDetail {
     this.attachment.createAttachment(workspaceSlug, projectId, issueId, file);
   removeAttachment = async (workspaceSlug: string, projectId: string, issueId: string, attachmentId: string) =>
     this.attachment.removeAttachment(workspaceSlug, projectId, issueId, attachmentId);
+
+  // checklist
+  fetchChecklist = async (workspaceSlug: string, projectId: string, issueId: string) =>
+    this.checklist.fetchChecklist(workspaceSlug, projectId, issueId);
+  createChecklistItem = async (
+    workspaceSlug: string,
+    projectId: string,
+    issueId: string,
+    data: Partial<TIssueChecklistItem>
+  ) => this.checklist.createChecklistItem(workspaceSlug, projectId, issueId, data);
+  updateChecklistItem = async (
+    workspaceSlug: string,
+    projectId: string,
+    issueId: string,
+    checklistItemId: string,
+    data: Partial<TIssueChecklistItem>
+  ) => this.checklist.updateChecklistItem(workspaceSlug, projectId, issueId, checklistItemId, data);
+  deleteChecklistItem = async (
+    workspaceSlug: string,
+    projectId: string,
+    issueId: string,
+    checklistItemId: string
+  ) => this.checklist.deleteChecklistItem(workspaceSlug, projectId, issueId, checklistItemId);
 
   // link
   addLinks = (issueId: string, links: TIssueLink[]) => this.link.addLinks(issueId, links);

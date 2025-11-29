@@ -2,6 +2,7 @@ import { TIssuePriorities } from "../issues";
 import { TIssuePublicComment } from "./activity/issue_comment";
 import { TIssueAttachment } from "./issue_attachment";
 import { TIssueLink } from "./issue_link";
+import { TIssueChecklistItem } from "./issue_checklist";
 import { TIssueReaction, IIssuePublicReaction, IPublicVote } from "./issue_reaction";
 import { TIssueRelationTypes } from "./issue_relation";
 
@@ -89,6 +90,7 @@ export type TIssue = TBaseIssue & {
   issue_link?: TIssueLink[];
   issue_relation?: IssueRelation[];
   issue_related?: IssueRelation[];
+  issue_checklist?: TIssueChecklistItem[];
   // tempId is used for optimistic updates. It is not a part of the API response.
   tempId?: string;
   // sourceIssueId is used to store the original issue id when creating a copy of an issue. Used in cloning property values. It is not a part of the API response.
@@ -148,7 +150,7 @@ export type TBulkOperationsPayload = {
   properties: Partial<TBulkIssueProperties>;
 };
 
-export type TWorkItemWidgets = "sub-work-items" | "relations" | "links" | "attachments";
+export type TWorkItemWidgets = "sub-work-items" | "relations" | "links" | "attachments" | "checklist";
 
 export type TIssueServiceType = EIssueServiceType.ISSUES | EIssueServiceType.EPICS | EIssueServiceType.WORK_ITEMS;
 

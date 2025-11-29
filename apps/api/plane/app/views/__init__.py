@@ -133,6 +133,8 @@ from .issue.attachment import (
     IssueAttachmentV2Endpoint,
 )
 
+from .issue.checklist import IssueChecklistEndpoint
+
 from .issue.comment import IssueCommentViewSet, CommentReactionViewSet
 
 from .issue.label import LabelViewSet, BulkCreateIssueLabelsEndpoint

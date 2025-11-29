@@ -35,5 +35,5 @@
   },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts"
+  "types": "./dist/index-C1N-N7No.d.ts"
 }

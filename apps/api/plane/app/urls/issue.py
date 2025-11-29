@@ -6,6 +6,7 @@ from plane.app.views import (
     SubIssuesEndpoint,
     IssueLinkViewSet,
     IssueAttachmentEndpoint,
+    IssueChecklistEndpoint,
     CommentReactionViewSet,
     IssueActivityEndpoint,
     IssueArchiveViewSet,
@@ -132,6 +133,16 @@ urlpatterns = [
         "workspaces/<str:slug>/projects/<uuid:project_id>/issues/<uuid:issue_id>/issue-attachments/<uuid:pk>/",
         IssueAttachmentEndpoint.as_view(),
         name="project-issue-attachments",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/issues/<uuid:issue_id>/checklist/",
+        IssueChecklistEndpoint.as_view(),
+        name="project-issue-checklist",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/issues/<uuid:issue_id>/checklist/<uuid:pk>/",
+        IssueChecklistEndpoint.as_view(),
+        name="project-issue-checklist-detail",
     ),
     # V2 Attachments
     path(

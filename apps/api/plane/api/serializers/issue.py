@@ -16,6 +16,7 @@ from plane.db.models import (
     IssueComment,
     IssueLabel,
     IssueLink,
+    IssueChecklistItem,
     Label,
     ProjectMember,
     State,
@@ -494,6 +495,72 @@ class IssueAttachmentSerializer(BaseSerializer):
             "updated_by",
             "updated_at",
         ]
+
+
+class IssueChecklistItemSerializer(BaseSerializer):
+    """
+    Serializer for work item checklist items.
+
+    Manages checklist items with completion tracking, assignment,
+    and progress monitoring for task breakdown.
+    """
+    
+    completed_by_detail = UserLiteSerializer(source="completed_by", read_only=True)
+    assignee_detail = UserLiteSerializer(source="assignee", read_only=True)
+
+    class Meta:
+        model = IssueChecklistItem
+        fields = [
+            "id",
+            "workspace",
+            "project",
+            "issue",
+            "title",
+            "is_completed",
+            "completed_by",
+            "completed_by_detail",
+            "completed_at",
+            "assignee",
+            "assignee_detail",
+            "sort_order",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at",
+            "deleted_at",
+        ]
+        read_only_fields = [
+            "id",
+            "workspace",
+            "project",
+            "issue",
+            "created_by",
+            "updated_by",
+            "created_at",
+            "updated_at",
+            "completed_by",
+            "completed_at",
+        ]
+    
+    def create(self, validated_data):
+        """Create checklist item with proper issue, project, and workspace relationships"""
+        request = self.context.get("request")
+        issue = self.context.get("issue")
+        
+        if not issue:
+            raise serializers.ValidationError({"error": "Issue is required."})
+        
+        # Set required relationships
+        validated_data["issue"] = issue
+        validated_data["project"] = issue.project
+        validated_data["workspace"] = issue.workspace
+        
+        # Set audit fields
+        if request and request.user.is_authenticated:
+            validated_data.setdefault("created_by", request.user)
+            validated_data.setdefault("updated_by", request.user)
+        
+        return IssueChecklistItem.objects.create(**validated_data)
 
 
 class IssueCommentCreateSerializer(BaseSerializer):

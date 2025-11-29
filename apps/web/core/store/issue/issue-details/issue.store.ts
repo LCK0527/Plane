@@ -329,6 +329,9 @@ export class IssueStore implements IIssueStore {
     // fetch issue attachments
     if (issue.issue_attachments) rootWorkItemDetailStore.addAttachments(issueId, issue.issue_attachments);
 
+    // fetch issue checklist
+    if (issue.issue_checklist) rootWorkItemDetailStore.checklist.addChecklistItems(issueId, issue.issue_checklist);
+
     rootWorkItemDetailStore.addSubscription(issueId, issue.is_subscribed);
 
     // fetch issue activity

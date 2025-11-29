@@ -549,6 +549,7 @@ export default {
     customize_time_range: "Customize time range",
     loading: "Loading",
     attachments: "Attachments",
+    checklist: "Checklist",
     property: "Property",
     properties: "Properties",
     parent: "Parent",
@@ -821,6 +822,9 @@ export default {
       relation: "Add relation",
       link: "Add link",
       existing: "Add existing work item",
+    },
+    checklist: {
+      add_item_placeholder: "Add a checklist item",
     },
     remove: {
       label: "Remove work item",

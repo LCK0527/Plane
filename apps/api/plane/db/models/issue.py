@@ -412,6 +412,42 @@ class IssueAttachment(ProjectBaseModel):
         return f"{self.issue.name} {self.asset}"
 
 
+class IssueChecklistItem(ProjectBaseModel):
+    """Checklist item for issues"""
+    issue = models.ForeignKey(
+        Issue,
+        related_name="checklist_items",
+        on_delete=models.CASCADE
+    )
+    title = models.CharField(max_length=500, verbose_name="Checklist Item Title")
+    is_completed = models.BooleanField(default=False)
+    completed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="completed_checklist_items"
+    )
+    completed_at = models.DateTimeField(null=True, blank=True)
+    assignee = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_checklist_items"
+    )
+    sort_order = models.FloatField(default=65535)
+
+    class Meta:
+        verbose_name = "Issue Checklist Item"
+        verbose_name_plural = "Issue Checklist Items"
+        db_table = "issue_checklist_items"
+        ordering = ("sort_order", "created_at")
+
+    def __str__(self):
+        return f"{self.issue.name} - {self.title}"
+
+
 class IssueActivity(ProjectBaseModel):
     issue = models.ForeignKey(Issue, on_delete=models.SET_NULL, null=True, related_name="issue_activity")
     verb = models.CharField(max_length=255, verbose_name="Action", default="created")

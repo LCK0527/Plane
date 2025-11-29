@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # Python import
 import os
 from typing import List, Dict, Tuple

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 # Django imports
 from django.conf import settings
 from django.http import HttpRequest

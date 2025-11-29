@@ -11,6 +11,7 @@ import { WorkItemAdditionalWidgetCollapsibles } from "@/plane-web/components/iss
 import { useTimeLineRelationOptions } from "@/plane-web/components/relations";
 // local imports
 import { AttachmentsCollapsible } from "./attachments";
+import { ChecklistCollapsible } from "./checklist";
 import { LinksCollapsible } from "./links";
 import { RelationsCollapsible } from "./relations";
 import { SubIssuesCollapsible } from "./sub-issues";
@@ -31,11 +32,13 @@ export const IssueDetailWidgetCollapsibles: FC<Props> = observer((props) => {
     issue: { getIssueById },
     subIssues: { subIssuesByIssueId },
     attachment: { getAttachmentsCountByIssueId, getAttachmentsUploadStatusByIssueId },
+    checklist: { getChecklistItemsByIssueId },
     relation: { getRelationCountByIssueId },
   } = useIssueDetail(issueServiceType);
   // derived values
   const issue = getIssueById(issueId);
   const subIssues = subIssuesByIssueId(issueId);
+  const checklistItems = getChecklistItemsByIssueId(issueId);
   const ISSUE_RELATION_OPTIONS = useTimeLineRelationOptions();
   const issueRelationsCount = getRelationCountByIssueId(issueId, ISSUE_RELATION_OPTIONS);
   // render conditions
@@ -47,6 +50,7 @@ export const IssueDetailWidgetCollapsibles: FC<Props> = observer((props) => {
   const shouldRenderAttachments =
     attachmentsCount > 0 ||
     (!!attachmentUploads && attachmentUploads.length > 0 && !hideWidgets?.includes("attachments"));
+  const shouldRenderChecklist = (!!checklistItems && checklistItems.length > 0) || !hideWidgets?.includes("checklist");
 
   return (
     <div className="flex flex-col">
@@ -78,6 +82,15 @@ export const IssueDetailWidgetCollapsibles: FC<Props> = observer((props) => {
       )}
       {shouldRenderAttachments && (
         <AttachmentsCollapsible
+          workspaceSlug={workspaceSlug}
+          projectId={projectId}
+          issueId={issueId}
+          disabled={disabled}
+          issueServiceType={issueServiceType}
+        />
+      )}
+      {shouldRenderChecklist && (
+        <ChecklistCollapsible
           workspaceSlug={workspaceSlug}
           projectId={projectId}
           issueId={issueId}
