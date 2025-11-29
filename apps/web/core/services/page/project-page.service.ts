@@ -185,4 +185,22 @@ export class ProjectPageService extends APIService {
         throw error?.response?.data;
       });
   }
+
+  async aiModularize(workspaceSlug: string, projectId: string, pageId: string): Promise<{
+    modules: Array<{
+      name: string;
+      description: string;
+      start_date: string | null;
+      target_date: string | null;
+      status: string;
+    }>;
+    page_id: string;
+    page_name: string;
+  }> {
+    return this.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/pages/${pageId}/ai-modularize/`)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
 }

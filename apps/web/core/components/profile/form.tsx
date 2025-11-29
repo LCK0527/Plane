@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { observer } from "mobx-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -21,6 +21,8 @@ import { UserImageUploadModal } from "@/components/core/modals/user-image-upload
 import { captureSuccess, captureError } from "@/helpers/event-tracker.helper";
 // hooks
 import { useUser, useUserProfile } from "@/hooks/store/user";
+// services
+import { UserService } from "@/services/user.service";
 
 type TUserProfileForm = {
   avatar_url: string;
@@ -41,6 +43,8 @@ export type TProfileFormProps = {
   profile: TUserProfile;
 };
 
+const userService = new UserService();
+
 export const ProfileForm = observer((props: TProfileFormProps) => {
   const { user, profile } = props;
   const { workspaceSlug } = useParams();
@@ -48,6 +52,8 @@ export const ProfileForm = observer((props: TProfileFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isImageUploadModalOpen, setIsImageUploadModalOpen] = useState(false);
   const [deactivateAccountModal, setDeactivateAccountModal] = useState(false);
+  const [llmApiKey, setLlmApiKey] = useState("");
+  const [isLoadingApiKey, setIsLoadingApiKey] = useState(false);
   // language support
   const { t } = useTranslation();
   // form info
@@ -77,6 +83,38 @@ export const ProfileForm = observer((props: TProfileFormProps) => {
   // store hooks
   const { data: currentUser, updateCurrentUser } = useUser();
   const { updateUserProfile } = useUserProfile();
+
+  // Load LLM API key on mount
+  useEffect(() => {
+    userService
+      .getLLMApiKey()
+      .then((data) => {
+        setLlmApiKey(data.llm_api_key || "");
+      })
+      .catch(() => {
+        // Ignore errors, API key might not be set
+      });
+  }, []);
+
+  const handleLLMApiKeyUpdate = async () => {
+    setIsLoadingApiKey(true);
+    try {
+      await userService.updateLLMApiKey(llmApiKey);
+      setToast({
+        type: TOAST_TYPE.SUCCESS,
+        title: "成功",
+        message: "LLM API Key 已更新",
+      });
+    } catch (error: any) {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "錯誤",
+        message: error?.error || error?.detail || "更新 LLM API Key 時發生錯誤",
+      });
+    } finally {
+      setIsLoadingApiKey(false);
+    }
+  };
 
   const handleProfilePictureDelete = async (url: string | null | undefined) => {
     if (!url) return;
@@ -355,6 +393,34 @@ export const ProfileForm = observer((props: TProfileFormProps) => {
                   )}
                 />
               </div>
+            </div>
+          </div>
+          {/* LLM API Key Section */}
+          <div className="flex flex-col gap-2 border-t border-custom-border-200 pt-6">
+            <div className="flex flex-col gap-1">
+              <h4 className="text-sm font-medium text-custom-text-200">LLM API Key</h4>
+              <p className="text-xs text-custom-text-300">
+                用於 AI 模組化功能的 OpenAI API Key。您的 API Key 將安全存儲，僅用於 AI 功能。
+              </p>
+            </div>
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <Input
+                  type="password"
+                  value={llmApiKey}
+                  onChange={(e) => setLlmApiKey(e.target.value)}
+                  placeholder="輸入您的 OpenAI API Key"
+                  className="w-full"
+                />
+              </div>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleLLMApiKeyUpdate}
+                loading={isLoadingApiKey}
+              >
+                保存
+              </Button>
             </div>
           </div>
           <div className="flex flex-col gap-1">

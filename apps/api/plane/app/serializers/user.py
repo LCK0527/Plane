@@ -84,11 +84,22 @@ class UserMeSerializer(BaseSerializer):
 
 class UserMeSettingsSerializer(BaseSerializer):
     workspace = serializers.SerializerMethodField()
+    llm_api_key = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ["id", "email", "workspace"]
+        fields = ["id", "email", "workspace", "llm_api_key"]
         read_only_fields = fields
+
+    def get_llm_api_key(self, obj):
+        """Get LLM API key from user's profile theme"""
+        try:
+            profile = Profile.objects.get(user=obj)
+            if profile.theme and isinstance(profile.theme, dict):
+                return profile.theme.get("llm_api_key", "")
+            return ""
+        except Profile.DoesNotExist:
+            return ""
 
     def get_workspace(self, obj):
         workspace_invites = WorkspaceMemberInvite.objects.filter(email=obj.email).count()

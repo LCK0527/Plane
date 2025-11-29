@@ -7,6 +7,7 @@ from plane.app.views import (
     PagesDescriptionViewSet,
     PageVersionEndpoint,
     PageDuplicateEndpoint,
+    PageAIModularizeEndpoint,
 )
 
 urlpatterns = [
@@ -68,5 +69,11 @@ urlpatterns = [
         "workspaces/<str:slug>/projects/<uuid:project_id>/pages/<uuid:page_id>/duplicate/",
         PageDuplicateEndpoint.as_view(),
         name="page-duplicate",
+    ),
+    # AI modularize
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/pages/<uuid:page_id>/ai-modularize/",
+        PageAIModularizeEndpoint.as_view(),
+        name="page-ai-modularize",
     ),
 ]

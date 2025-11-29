@@ -12,6 +12,7 @@ from plane.app.views import (
     UserIssueCompletedGraphEndpoint,
     UserWorkspaceDashboardEndpoint,
     UserSessionEndpoint,
+    UserLLMApiKeyEndpoint,
     ## End User
     ## Workspaces
     UserWorkSpacesEndpoint,
@@ -32,6 +33,8 @@ urlpatterns = [
     ),
     # Profile
     path("users/me/profile/", ProfileEndpoint.as_view(), name="accounts"),
+    # LLM API Key
+    path("users/me/llm-api-key/", UserLLMApiKeyEndpoint.as_view(), name="user-llm-api-key"),
     # End profile
     # Accounts
     path("users/me/accounts/", AccountEndpoint.as_view(), name="accounts"),

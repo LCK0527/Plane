@@ -26,6 +26,7 @@ from .user.base import (
     UpdateUserTourCompletedEndpoint,
     UserActivityEndpoint,
 )
+from .user.llm_api_key import UserLLMApiKeyEndpoint
 
 
 from .base import BaseAPIView, BaseViewSet
@@ -171,6 +172,7 @@ from .page.base import (
     PageDuplicateEndpoint,
 )
 from .page.version import PageVersionEndpoint
+from .page.ai_modularize import PageAIModularizeEndpoint
 
 from .search.base import GlobalSearchEndpoint, SearchEndpoint
 from .search.issue import IssueSearchEndpoint
@@ -233,6 +235,7 @@ from .error_404 import custom_404_view
 
 from .notification.base import MarkAllReadNotificationViewSet
 from .user.base import AccountEndpoint, ProfileEndpoint, UserSessionEndpoint
+from .user.llm_api_key import UserLLMApiKeyEndpoint
 
 from .timezone.base import TimezoneEndpoint
 

@@ -258,6 +258,22 @@ export class UserService extends APIService {
         throw error?.response?.data;
       });
   }
+
+  async getLLMApiKey(): Promise<{ llm_api_key: string }> {
+    return this.get("/api/users/me/llm-api-key/")
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async updateLLMApiKey(apiKey: string): Promise<{ llm_api_key: string; message: string }> {
+    return this.patch("/api/users/me/llm-api-key/", { llm_api_key: apiKey })
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
 }
 
 const userService = new UserService();
