@@ -34,6 +34,7 @@ import { IssueStats } from "@/plane-web/components/issues/issue-layouts/issue-st
 import type { TRenderQuickActions } from "../list/list-view-types";
 import { IssueProperties } from "../properties/all-properties";
 import { WithDisplayPropertiesHOC } from "../properties/with-display-properties-HOC";
+import type { TCardSize } from "./board-toolbar";
 
 interface IssueBlockProps {
   issueId: string;
@@ -50,6 +51,7 @@ interface IssueBlockProps {
   scrollableContainerRef?: MutableRefObject<HTMLDivElement | null>;
   shouldRenderByDefault?: boolean;
   isEpic?: boolean;
+  cardSize?: TCardSize;
 }
 
 interface IssueDetailsBlockProps {
@@ -60,10 +62,11 @@ interface IssueDetailsBlockProps {
   quickActions: TRenderQuickActions;
   isReadOnly: boolean;
   isEpic?: boolean;
+  cardSize?: TCardSize;
 }
 
 const KanbanIssueDetailsBlock: React.FC<IssueDetailsBlockProps> = observer((props) => {
-  const { cardRef, issue, updateIssue, quickActions, isReadOnly, displayProperties, isEpic = false } = props;
+  const { cardRef, issue, updateIssue, quickActions, isReadOnly, displayProperties, isEpic = false, cardSize = "default" } = props;
   // refs
   const menuActionRef = useRef<HTMLDivElement | null>(null);
   // states
@@ -120,20 +123,64 @@ const KanbanIssueDetailsBlock: React.FC<IssueDetailsBlockProps> = observer((prop
       </div>
 
       <Tooltip tooltipContent={issue.name} isMobile={isMobile} renderByDefault={false}>
-        <div className="w-full line-clamp-1 text-sm text-custom-text-100">
+        <div
+          className={cn(
+            "w-full text-custom-text-100",
+            {
+              "line-clamp-1 text-xs": cardSize === "compact",
+              "line-clamp-1 text-sm": cardSize === "default",
+              "line-clamp-2 text-sm": cardSize === "comfortable",
+            }
+          )}
+        >
           <span>{issue.name}</span>
         </div>
       </Tooltip>
 
-      <IssueProperties
-        className="flex flex-wrap items-center gap-2 whitespace-nowrap text-custom-text-300 pt-1.5"
-        issue={issue}
-        displayProperties={displayProperties}
-        activeLayout="Kanban"
-        updateIssue={updateIssue}
-        isReadOnly={isReadOnly}
-        isEpic={isEpic}
-      />
+      {/* Show properties only for default and comfortable sizes, hide for compact */}
+      {cardSize !== "compact" && (
+        <IssueProperties
+          className={cn(
+            "flex flex-wrap items-center whitespace-nowrap text-custom-text-300",
+            {
+              "gap-1.5 pt-1 text-xs": cardSize === "default",
+              "gap-2 pt-2 text-xs": cardSize === "comfortable",
+            }
+          )}
+          issue={issue}
+          displayProperties={displayProperties}
+          activeLayout="Kanban"
+          updateIssue={updateIssue}
+          isReadOnly={isReadOnly}
+          isEpic={isEpic}
+        />
+      )}
+      
+      {/* Show extra metadata for comfortable size */}
+      {cardSize === "comfortable" && (
+        <div className="flex items-center gap-2 pt-1">
+          {issue.assignee_ids && issue.assignee_ids.length > 0 && (
+            <div className="flex items-center gap-1">
+              {/* Assignee avatars would go here */}
+            </div>
+          )}
+          {issue.priority && (
+            <div className="rounded px-1.5 py-0.5 text-xs font-medium bg-custom-background-80">
+              {issue.priority}
+            </div>
+          )}
+          {issue.label_ids && issue.label_ids.length > 0 && (
+            <div className="rounded px-1.5 py-0.5 text-xs bg-custom-background-80">
+              {issue.label_ids.length} label{issue.label_ids.length > 1 ? "s" : ""}
+            </div>
+          )}
+          {issue.target_date && (
+            <div className="text-xs text-custom-text-400">
+              Due: {new Date(issue.target_date).toLocaleDateString()}
+            </div>
+          )}
+        </div>
+      )}
 
       {isEpic && displayProperties && (
         <WithDisplayPropertiesHOC
@@ -163,6 +210,7 @@ export const KanbanIssueBlock: React.FC<IssueBlockProps> = observer((props) => {
     scrollableContainerRef,
     shouldRenderByDefault,
     isEpic = false,
+    cardSize = "default",
   } = props;
 
   const cardRef = useRef<HTMLAnchorElement | null>(null);
@@ -273,15 +321,33 @@ export const KanbanIssueBlock: React.FC<IssueBlockProps> = observer((props) => {
             "block rounded border-[1px] outline-[0.5px] outline-transparent w-full border-custom-border-200 bg-custom-background-100 text-sm transition-all hover:border-custom-border-400",
             { "hover:cursor-pointer": isDragAllowed },
             { "border border-custom-primary-70 hover:border-custom-primary-70": getIsIssuePeeked(issue.id) },
-            { "bg-custom-background-80 z-[100]": isCurrentBlockDragging }
+            { "bg-custom-background-80 z-[100]": isCurrentBlockDragging },
+            // Card size styles
+            {
+              "px-2 py-1.5": cardSize === "compact",
+              "px-3 py-2": cardSize === "default",
+              "px-4 py-3": cardSize === "comfortable",
+            }
           )}
           onClick={() => handleIssuePeekOverview(issue)}
           disabled={!!issue?.tempId}
         >
           <RenderIfVisible
-            classNames="space-y-2 px-3 py-2"
+            classNames={cn(
+              "space-y-2",
+              {
+                "space-y-1": cardSize === "compact",
+                "space-y-2": cardSize === "default",
+                "space-y-3": cardSize === "comfortable",
+              },
+              {
+                "px-2 py-1.5": cardSize === "compact",
+                "px-3 py-2": cardSize === "default",
+                "px-4 py-3": cardSize === "comfortable",
+              }
+            )}
             root={scrollableContainerRef}
-            defaultHeight="100px"
+            defaultHeight={cardSize === "compact" ? "60px" : cardSize === "comfortable" ? "140px" : "100px"}
             horizontalOffset={100}
             verticalOffset={200}
             defaultValue={shouldRenderByDefault}
@@ -294,6 +360,7 @@ export const KanbanIssueBlock: React.FC<IssueBlockProps> = observer((props) => {
               quickActions={quickActions}
               isReadOnly={!canEditIssueProperties}
               isEpic={isEpic}
+              cardSize={cardSize}
             />
           </RenderIfVisible>
         </ControlLink>

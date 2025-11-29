@@ -14,6 +14,7 @@ import type {
 } from "@plane/types";
 // UI
 import { Row } from "@plane/ui";
+import { useParams } from "next/navigation";
 // hooks
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 // components
@@ -24,6 +25,7 @@ import { getGroupByColumns, isWorkspaceLevel } from "../utils";
 import { KanBan } from "./default";
 import { HeaderGroupByCard } from "./headers/group-by-card";
 import { HeaderSubGroupByCard } from "./headers/sub-group-by-card";
+import type { TCardSize } from "./board-toolbar";
 // types
 // constants
 
@@ -41,16 +43,15 @@ interface ISubGroupSwimlaneHeader {
   showEmptyGroup: boolean;
 }
 
-const visibilitySubGroupByGroupCount = (subGroupIssueCount: number, showEmptyGroup: boolean): boolean => {
-  let subGroupHeaderVisibility = true;
-
-  if (showEmptyGroup) subGroupHeaderVisibility = true;
-  else {
-    if (subGroupIssueCount > 0) subGroupHeaderVisibility = true;
-    else subGroupHeaderVisibility = false;
+const visibilitySubGroupByGroupCount = (subGroupIssueCount: number, showEmptyGroup: boolean, sub_group_by?: TIssueGroupByOptions): boolean => {
+  // Always show headers for assignees, priority, and labels swimlanes
+  // This ensures users can see their own assignee bar and add issues
+  if (sub_group_by === "assignees" || sub_group_by === "priority" || sub_group_by === "labels") {
+    return true;
   }
 
-  return subGroupHeaderVisibility;
+  if (showEmptyGroup) return true;
+  return subGroupIssueCount > 0;
 };
 
 const SubGroupSwimlaneHeader: React.FC<ISubGroupSwimlaneHeader> = observer(
@@ -64,7 +65,7 @@ const SubGroupSwimlaneHeader: React.FC<ISubGroupSwimlaneHeader> = observer(
           list.map((_list: IGroupByColumn) => {
             const groupCount = getGroupIssueCount(_list?.id, undefined, false) ?? 0;
 
-            const subGroupByVisibilityToggle = visibilitySubGroupByGroupCount(groupCount, showEmptyGroup);
+            const subGroupByVisibilityToggle = visibilitySubGroupByGroupCount(groupCount, showEmptyGroup, sub_group_by);
 
             if (subGroupByVisibilityToggle === false) return <></>;
 
@@ -113,6 +114,7 @@ interface ISubGroupSwimlane extends ISubGroupSwimlaneHeader {
   quickAddCallback?: (projectId: string | null | undefined, data: TIssue) => Promise<TIssue | undefined>;
   scrollableContainerRef?: MutableRefObject<HTMLDivElement | null>;
   loadMoreIssues: (groupId?: string, subGroupId?: string) => void;
+  cardSize?: TCardSize;
 }
 
 const SubGroupSwimlane: React.FC<ISubGroupSwimlane> = observer((props) => {
@@ -138,6 +140,7 @@ const SubGroupSwimlane: React.FC<ISubGroupSwimlane> = observer((props) => {
     scrollableContainerRef,
     handleOnDrop,
     orderBy,
+    cardSize = "default",
   } = props;
 
   const visibilitySubGroupBy = (
@@ -148,8 +151,12 @@ const SubGroupSwimlane: React.FC<ISubGroupSwimlane> = observer((props) => {
       showGroup: true,
       showIssues: true,
     };
-    if (showEmptyGroup) subGroupVisibility.showGroup = true;
-    else {
+    // Always show groups when grouping by assignees, priority, or labels (swimlanes)
+    // This ensures users can see their own assignee bar even with no issues
+    const shouldAlwaysShow = sub_group_by === "assignees" || sub_group_by === "priority" || sub_group_by === "labels";
+    if (showEmptyGroup || shouldAlwaysShow) {
+      subGroupVisibility.showGroup = true;
+    } else {
       if (subGroupCount > 0) subGroupVisibility.showGroup = true;
       else subGroupVisibility.showGroup = false;
     }
@@ -208,6 +215,7 @@ const SubGroupSwimlane: React.FC<ISubGroupSwimlane> = observer((props) => {
                     orderBy={orderBy}
                     isDropDisabled={_list.isDropDisabled}
                     dropErrorMessage={_list.dropErrorMessage}
+                    cardSize={cardSize}
                   />
                 </div>
               )}
@@ -243,6 +251,7 @@ export interface IKanBanSwimLanes {
   canEditProperties: (projectId: string | undefined) => boolean;
   scrollableContainerRef?: MutableRefObject<HTMLDivElement | null>;
   orderBy: TIssueOrderByOptions | undefined;
+  cardSize?: TCardSize;
 }
 
 export const KanBanSwimLanes: React.FC<IKanBanSwimLanes> = observer((props) => {
@@ -267,19 +276,25 @@ export const KanBanSwimLanes: React.FC<IKanBanSwimLanes> = observer((props) => {
     addIssuesToView,
     quickAddCallback,
     scrollableContainerRef,
+    cardSize = "default",
   } = props;
   // store hooks
   const storeType = useIssueStoreType();
+  // Get projectId from useParams or from issues store
+  const { projectId: routerProjectId } = useParams();
+  const projectId = routerProjectId?.toString();
   // derived values
   const groupByList = getGroupByColumns({
     groupBy: group_by as GroupByColumnTypes,
     includeNone: true,
     isWorkspaceLevel: isWorkspaceLevel(storeType),
+    projectId,
   });
   const subGroupByList = getGroupByColumns({
     groupBy: sub_group_by as GroupByColumnTypes,
     includeNone: true,
     isWorkspaceLevel: isWorkspaceLevel(storeType),
+    projectId,
   });
 
   if (!groupByList || !subGroupByList) return null;
@@ -321,6 +336,8 @@ export const KanBanSwimLanes: React.FC<IKanBanSwimLanes> = observer((props) => {
           canEditProperties={canEditProperties}
           quickAddCallback={quickAddCallback}
           scrollableContainerRef={scrollableContainerRef}
+          cardSize={cardSize}
+          orderBy={orderBy}
         />
       )}
     </div>

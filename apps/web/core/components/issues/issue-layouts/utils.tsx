@@ -31,6 +31,7 @@ import { Logo } from "@/components/common/logo";
 // helpers
 // store
 import { store } from "@/lib/store-context";
+import { RootStore } from "@/store/root.store";
 // plane web store
 import {
   getScopeMemberIds,
@@ -269,27 +270,73 @@ const getLabelsColumns = ({ isWorkspaceLevel }: TGetColumns): IGroupByColumn[] =
 const getAssigneeColumns = ({ isWorkspaceLevel, projectId }: TGetColumns): IGroupByColumn[] | undefined => {
   // store values
   const { getUserDetails } = store.memberRoot;
+  // Get current user from root store - store.user is IUserStore
+  const currentUserData = (store as any)?.user?.data;
+  const currentUserId = currentUserData?.id;
   // derived values
   const { memberIds, includeNone } = getScopeMemberIds({ isWorkspaceLevel, projectId });
   const assigneeColumns: IGroupByColumn[] = [];
+  const processedMemberIds = new Set<string>();
 
-  if (!memberIds) return [];
-
-  memberIds.forEach((memberId) => {
-    const member = getUserDetails(memberId);
-    if (!member) return;
+  // Always include current user first if they exist and not already in the list
+  if (currentUserId) {
+    processedMemberIds.add(currentUserId);
+    // Try to get user details from memberMap first, fallback to user.data
+    let currentUser = getUserDetails(currentUserId);
+    if (!currentUser && currentUserData) {
+      // If not in memberMap, use user.data directly
+      currentUser = {
+        id: currentUserData.id,
+        display_name: currentUserData.display_name || currentUserData.email || "You",
+        avatar_url: currentUserData.avatar_url,
+      } as any;
+    }
+    // Always add current user column - use available data or defaults
+    const displayName = currentUser?.display_name || currentUserData?.display_name || currentUserData?.email || "You";
+    const avatarUrl = currentUser?.avatar_url || currentUserData?.avatar_url;
     assigneeColumns.push({
-      id: memberId,
-      name: member?.display_name || "",
-      icon: <Avatar name={member?.display_name} src={getFileURL(member?.avatar_url ?? "")} size="md" />,
-      payload: { assignee_ids: [memberId] },
+      id: currentUserId,
+      name: displayName,
+      icon: <Avatar name={displayName} src={getFileURL(avatarUrl ?? "")} size="md" />,
+      payload: { assignee_ids: [currentUserId] },
     });
-  });
+  }
+
+  // Add other members
+  if (memberIds && memberIds.length > 0) {
+    memberIds.forEach((memberId) => {
+      // Skip if already added (current user)
+      if (processedMemberIds.has(memberId)) return;
+      
+      const member = getUserDetails(memberId);
+      if (!member) return;
+      
+      processedMemberIds.add(memberId);
+      assigneeColumns.push({
+        id: memberId,
+        name: member?.display_name || "",
+        icon: <Avatar name={member?.display_name} src={getFileURL(member?.avatar_url ?? "")} size="md" />,
+        payload: { assignee_ids: [memberId] },
+      });
+    });
+  }
+
   if (includeNone) {
     assigneeColumns.push({ id: "None", name: "None", icon: <Avatar size="md" />, payload: {} });
   }
 
-  return assigneeColumns;
+  // If we have no columns but have a current user ID, ensure we create at least one column
+  if (assigneeColumns.length === 0 && currentUserId) {
+    assigneeColumns.push({
+      id: currentUserId,
+      name: currentUserData?.display_name || currentUserData?.email || "You",
+      icon: <Avatar name={currentUserData?.display_name || currentUserData?.email || "You"} src={getFileURL(currentUserData?.avatar_url ?? "")} size="md" />,
+      payload: { assignee_ids: [currentUserId] },
+    });
+  }
+
+  // Return the columns array (could be empty, but that's better than undefined for debugging)
+  return assigneeColumns.length > 0 ? assigneeColumns : undefined;
 };
 
 const getCreatedByColumns = (): IGroupByColumn[] | undefined => {

@@ -4,9 +4,9 @@ import type { FC } from "react";
 import React, { useState, useRef, useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
-import { FormProvider, useForm } from "react-hook-form";
+import { Controller, FormProvider, useForm } from "react-hook-form";
 // editor
-import { ETabIndices, DEFAULT_WORK_ITEM_FORM_VALUES } from "@plane/constants";
+import { ETabIndices, DEFAULT_WORK_ITEM_FORM_VALUES, ISSUE_PRIORITIES } from "@plane/constants";
 import type { EditorRefApi } from "@plane/editor";
 // i18n
 import { useTranslation } from "@plane/i18n";
@@ -32,6 +32,8 @@ import {
   IssueProjectSelect,
   IssueTitleInput,
 } from "@/components/issues/issue-modal/components";
+import { PriorityDropdown } from "@/components/dropdowns/priority";
+import { PriorityIcon } from "@plane/propel/icons";
 // helpers
 // hooks
 import { useIssueModal } from "@/hooks/context/use-issue-modal";
@@ -490,6 +492,54 @@ export const IssueFormRoot: FC<IssueFormProps> = observer((props) => {
                 activeAdditionalPropertiesLength > 0 && "shadow-custom-shadow-xs"
               )}
             >
+              {projectId && (
+                <div className="pb-3 border-b border-custom-border-200 mb-3">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className="text-xs font-medium text-custom-text-400">Priority:</span>
+                    <Controller
+                      control={control}
+                      name="priority"
+                      render={({ field: { value, onChange } }) => (
+                        <div className="flex items-center gap-2">
+                          {ISSUE_PRIORITIES.map((priorityOption) => {
+                            const isSelected = value === priorityOption.key;
+                            return (
+                              <button
+                                key={priorityOption.key}
+                                type="button"
+                                onClick={() => {
+                                  onChange(priorityOption.key);
+                                  handleFormChange();
+                                }}
+                                className={cn(
+                                  "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all border",
+                                  isSelected
+                                    ? "bg-custom-background-80 border-custom-primary-100 shadow-sm"
+                                    : "bg-custom-background-90 border-custom-border-300 hover:bg-custom-background-80 hover:border-custom-border-400"
+                                )}
+                                title={priorityOption.title}
+                              >
+                                <PriorityIcon
+                                  priority={priorityOption.key}
+                                  size={14}
+                                  withContainer={false}
+                                />
+                                <span
+                                  className={cn(
+                                    isSelected ? "text-custom-text-100" : "text-custom-text-400"
+                                  )}
+                                >
+                                  {priorityOption.title}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    />
+                  </div>
+                </div>
+              )}
               <div className="pb-3">
                 <IssueDefaultProperties
                   control={control}

@@ -105,23 +105,6 @@ export const IssueDefaultProperties: React.FC<TIssueDefaultPropertiesProps> = ob
       />
       <Controller
         control={control}
-        name="priority"
-        render={({ field: { value, onChange } }) => (
-          <div className="h-7">
-            <PriorityDropdown
-              value={value}
-              onChange={(priority) => {
-                onChange(priority);
-                handleFormChange();
-              }}
-              buttonVariant="border-with-text"
-              tabIndex={getIndex("priority")}
-            />
-          </div>
-        )}
-      />
-      <Controller
-        control={control}
         name="assignee_ids"
         render={({ field: { value, onChange } }) => (
           <div className="h-7">

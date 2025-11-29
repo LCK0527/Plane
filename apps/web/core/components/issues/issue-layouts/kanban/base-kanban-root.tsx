@@ -20,6 +20,8 @@ import { useUserPermissions } from "@/hooks/store/user";
 import { useGroupIssuesDragNDrop } from "@/hooks/use-group-dragndrop";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
+import { useUser } from "@/hooks/store/user/user-user";
+import type { TIssueGroupByOptions, TIssueOrderByOptions } from "@plane/types";
 // store
 // ui
 // types
@@ -30,6 +32,7 @@ import type { IQuickActionProps, TRenderQuickActions } from "../list/list-view-t
 import { getSourceFromDropPayload } from "../utils";
 import { KanBan } from "./default";
 import { KanBanSwimLanes } from "./swimlanes";
+import { BoardToolbar, type TCardSize, type TSwimlanePreset } from "./board-toolbar";
 
 export type KanbanStoreType =
   | EIssuesStoreType.PROJECT
@@ -110,7 +113,7 @@ export const BaseKanBanRoot: React.FC<IBaseKanBanLayout> = observer((props: IBas
 
   const userDisplayFilters = displayFilters || null;
 
-  const KanBanView = sub_group_by ? KanBanSwimLanes : KanBan;
+  const KanBanViewComponent = sub_group_by ? KanBanSwimLanes : KanBan;
 
   const { enableInlineEditing, enableQuickAdd, enableIssueCreation } = issues?.viewFlags || {};
 
@@ -119,6 +122,8 @@ export const BaseKanBanRoot: React.FC<IBaseKanBanLayout> = observer((props: IBas
   // states
   const [draggedIssueId, setDraggedIssueId] = useState<string | undefined>(undefined);
   const [deleteIssueModal, setDeleteIssueModal] = useState(false);
+  const [cardSize, setCardSize] = useState<TCardSize>("default");
+  const [activeQuickFilters, setActiveQuickFilters] = useState<Set<string>>(new Set());
 
   const isEditingAllowed = allowPermissions(
     [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
@@ -240,6 +245,82 @@ export const BaseKanBanRoot: React.FC<IBaseKanBanLayout> = observer((props: IBas
 
   const collapsedGroups = issuesFilter?.issueFilters?.kanbanFilters || { group_by: [], sub_group_by: [] };
 
+  // Handlers for board toolbar
+  const handleSwimlaneChange = useCallback(
+    (preset: TSwimlanePreset) => {
+      if (!workspaceSlug || !projectId) return;
+      
+      let newGroupBy: TIssueGroupByOptions | null = "state";
+      let newSubGroupBy: TIssueGroupByOptions | null = null;
+      
+      switch (preset) {
+        case "none":
+          newGroupBy = "state";
+          newSubGroupBy = null;
+          break;
+        case "assignee":
+          newGroupBy = "state";
+          newSubGroupBy = "assignees";
+          break;
+        case "priority":
+          newGroupBy = "state";
+          newSubGroupBy = "priority";
+          break;
+        case "labels":
+          newGroupBy = "state";
+          newSubGroupBy = "labels";
+          break;
+      }
+      
+      updateFilters(projectId.toString(), EIssueFilterType.DISPLAY_FILTERS, {
+        group_by: newGroupBy,
+        sub_group_by: newSubGroupBy,
+      });
+    },
+    [workspaceSlug, projectId, updateFilters]
+  );
+
+  const { data: currentUser } = useUser();
+
+  const handleQuickFilter = useCallback(
+    (filter: "my-issues" | "high-priority" | "due-this-week" | "clear") => {
+      if (!workspaceSlug || !projectId) return;
+      
+      const newActiveFilters = new Set(activeQuickFilters);
+      
+      if (filter === "clear") {
+        newActiveFilters.clear();
+        setActiveQuickFilters(new Set());
+        // Clear all quick filters - reset filter expression
+        // For now, just clear local state. Full implementation would reset richFilters
+        return;
+      }
+      
+      if (newActiveFilters.has(filter)) {
+        newActiveFilters.delete(filter);
+      } else {
+        newActiveFilters.add(filter);
+      }
+      
+      setActiveQuickFilters(newActiveFilters);
+      
+      // Update rich filters based on active quick filters
+      // This is a simplified version - full implementation would update filter expressions
+      // TODO: Implement proper filter expression updates using updateFilterExpression
+    },
+    [workspaceSlug, projectId, activeQuickFilters]
+  );
+
+  const handleSortChange = useCallback(
+    (newOrderBy: TIssueOrderByOptions) => {
+      if (!workspaceSlug || !projectId) return;
+      updateFilters(projectId.toString(), EIssueFilterType.DISPLAY_FILTERS, {
+        order_by: newOrderBy,
+      });
+    },
+    [workspaceSlug, projectId, updateFilters]
+  );
+
   return (
     <>
       <DeleteIssueModal
@@ -267,13 +348,26 @@ export const BaseKanBanRoot: React.FC<IBaseKanBanLayout> = observer((props: IBas
         </div>
       </div>
       <IssueLayoutHOC layout={EIssueLayoutTypes.KANBAN}>
-        <div
-          className={`horizontal-scrollbar scrollbar-lg relative flex h-full w-full bg-custom-background-90 ${sub_group_by ? "vertical-scrollbar overflow-y-auto" : "overflow-x-auto overflow-y-hidden"}`}
-          ref={scrollableContainerRef}
-        >
+        <div className="flex h-full w-full flex-col">
+          {/* Board Toolbar */}
+          <BoardToolbar
+            groupBy={group_by ?? null}
+            subGroupBy={sub_group_by ?? null}
+            onSwimlaneChange={handleSwimlaneChange}
+            cardSize={cardSize}
+            onCardSizeChange={setCardSize}
+            onQuickFilter={handleQuickFilter}
+            activeQuickFilters={activeQuickFilters}
+            orderBy={orderBy}
+            onSortChange={handleSortChange}
+          />
+          <div
+            className={`horizontal-scrollbar scrollbar-lg relative flex flex-1 w-full bg-custom-background-90 ${sub_group_by ? "vertical-scrollbar overflow-y-auto" : "overflow-x-auto overflow-y-hidden"}`}
+            ref={scrollableContainerRef}
+          >
           <div className="relative h-full w-max min-w-full bg-custom-background-90">
             <div className="h-full w-max">
-              <KanBanView
+              <KanBanViewComponent
                 issuesMap={issueMap}
                 groupedIssueIds={groupedIssueIds ?? {}}
                 getGroupIssueCount={issues.getGroupIssueCount}
@@ -295,7 +389,9 @@ export const BaseKanBanRoot: React.FC<IBaseKanBanLayout> = observer((props: IBas
                 handleOnDrop={handleOnDrop}
                 loadMoreIssues={fetchMoreIssues}
                 isEpic={isEpic}
+                cardSize={cardSize}
               />
+            </div>
             </div>
           </div>
         </div>

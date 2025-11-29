@@ -42,6 +42,7 @@ import { GroupDragOverlay } from "../group-drag-overlay";
 import type { TRenderQuickActions } from "../list/list-view-types";
 import { KanbanQuickAddIssueButton, QuickAddIssueRoot } from "../quick-add";
 import { KanbanIssueBlocksList } from "./blocks-list";
+import type { TCardSize } from "./board-toolbar";
 
 interface IKanbanGroup {
   groupId: string;
@@ -66,6 +67,7 @@ interface IKanbanGroup {
   handleOnDrop: (source: GroupDropLocation, destination: GroupDropLocation) => Promise<void>;
   orderBy: TIssueOrderByOptions | undefined;
   isEpic?: boolean;
+  cardSize?: TCardSize;
 }
 
 export const KanbanGroup = observer((props: IKanbanGroup) => {
@@ -90,6 +92,7 @@ export const KanbanGroup = observer((props: IKanbanGroup) => {
     scrollableContainerRef,
     handleOnDrop,
     isEpic = false,
+    cardSize = "default",
   } = props;
   // i18n
   const { t } = useTranslation();
@@ -305,6 +308,7 @@ export const KanbanGroup = observer((props: IKanbanGroup) => {
         canDropOverIssue={!canOverlayBeVisible}
         canDragIssuesInCurrentGrouping={canDragIssuesInCurrentGrouping}
         isEpic={isEpic}
+        cardSize={cardSize}
       />
 
       {shouldLoadMore && (isSubGroup ? <>{loadMore}</> : <KanbanIssueBlockLoader ref={setIntersectionElement} />)}

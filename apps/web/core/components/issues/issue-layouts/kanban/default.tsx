@@ -31,6 +31,7 @@ import { getGroupByColumns, isWorkspaceLevel, getApproximateCardHeight } from ".
 // components
 import { HeaderGroupByCard } from "./headers/group-by-card";
 import { KanbanGroup } from "./kanban-group";
+import type { TCardSize } from "./board-toolbar";
 
 export interface IKanBan {
   issuesMap: IIssueMap;
@@ -63,6 +64,7 @@ export interface IKanBan {
   showEmptyGroup?: boolean;
   subGroupIndex?: number;
   isEpic?: boolean;
+  cardSize?: TCardSize;
 }
 
 export const KanBan: React.FC<IKanBan> = observer((props) => {
@@ -92,6 +94,7 @@ export const KanBan: React.FC<IKanBan> = observer((props) => {
     dropErrorMessage,
     subGroupIndex = 0,
     isEpic = false,
+    cardSize = "default",
   } = props;
   // i18n
   const { t } = useTranslation();
@@ -118,7 +121,12 @@ export const KanBan: React.FC<IKanBan> = observer((props) => {
         showGroup: true,
         showIssues: true,
       };
-      if (!showEmptyGroup) {
+      // Always show groups when using swimlanes (sub_group_by) even if empty
+      // This ensures users can see swimlane headers and add issues
+      const shouldAlwaysShow = sub_group_by === "assignees" || sub_group_by === "priority" || sub_group_by === "labels";
+      if (showEmptyGroup || shouldAlwaysShow) {
+        groupVisibility.showGroup = true;
+      } else {
         groupVisibility.showGroup = (getGroupIssueCount(_list.id, undefined, false) ?? 0) > 0;
       }
       return groupVisibility;
@@ -127,7 +135,11 @@ export const KanBan: React.FC<IKanBan> = observer((props) => {
         showGroup: true,
         showIssues: true,
       };
-      if (!showEmptyGroup) {
+      // Always show groups when grouping by assignees to ensure current user is visible
+      const shouldAlwaysShow = group_by === "assignees";
+      if (showEmptyGroup || shouldAlwaysShow) {
+        groupVisibility.showGroup = true;
+      } else {
         if ((getGroupIssueCount(_list.id, undefined, false) ?? 0) > 0) groupVisibility.showGroup = true;
         else groupVisibility.showGroup = false;
       }
@@ -225,6 +237,7 @@ export const KanBan: React.FC<IKanBan> = observer((props) => {
                     loadMoreIssues={loadMoreIssues}
                     handleOnDrop={handleOnDrop}
                     isEpic={isEpic}
+                    cardSize={cardSize}
                   />
                 </RenderIfVisible>
               )}
