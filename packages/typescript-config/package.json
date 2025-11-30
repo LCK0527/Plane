@@ -7,6 +7,14 @@
     "base.json",
     "nextjs.json",
     "react-library.json",
-    "node-library.json"
-  ]
+    "node-library.json",
+    "react-router.json"
+  ],
+  "exports": {
+    "./base.json": "./base.json",
+    "./nextjs.json": "./nextjs.json",
+    "./react-library.json": "./react-library.json",
+    "./node-library.json": "./node-library.json",
+    "./react-router.json": "./react-router.json"
+  }
 }
